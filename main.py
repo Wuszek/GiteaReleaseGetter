@@ -51,7 +51,7 @@ class PullRequest:
 
     def download_gitea_package(self):
         if os.path.isfile(f"{self.latest_release}.tar.gz"):
-            print(f"TESTING : File {self.latest_release}.tar.gz is already there.")
+            print(f"DEBUG : File {self.latest_release}.tar.gz is already there.")
             pass
         else:
             print(f"DEBUG : Downloading package.")
@@ -66,15 +66,16 @@ class PullRequest:
             exit(1)
 
     def update_digest_file(self):
-        try:
+        if os.path.isfile("digest"):
             file = open("digest", "r+")
             file.seek(0)
             file.truncate()
             file.write(f"{self.sha1sum}\n{self.sha256sum}\n{self.md5sum}\n")
             file.close()
-            print("Updated Digest successfully.")
-        except Exception as e:
-            print("Something went wrong during digest file update.")
+            print("DEBUG : Updated cross/digest file successfully.")
+        else:
+            print("ERROR : Something went wrong during cross/digest file update.")
+            exit(1)
 
     def update_cross_makefile(self):
         if os.path.isfile("Makefile"):
@@ -86,7 +87,7 @@ class PullRequest:
             file.close()
             print("DEBUG : Updated Makefile successfully.")
         else:
-            print("ERROR : Something went wrong during Makefile file update.")
+            print("ERROR : Something went wrong during cross/Makefile file update.")
             exit(1)
 
     def run(self):
@@ -97,11 +98,13 @@ class PullRequest:
             self.write_file(self.latest_release)
         else:
             print(f"DEBUG : No changes. Still {self.last_saved} is newest.")
+            # TODO : Uncomment exit(0) after tests
+            # exit(0)
 
         self.git_pull_and_checkout()
         self.download_gitea_package()
-        #self.update_digest_file()
-        #self.update_cross_makefile()
+        self.update_digest_file()
+        self.update_cross_makefile()
 
 
 gitea_update = PullRequest()
