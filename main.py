@@ -110,6 +110,7 @@ class PullRequest:
         # TODO: Function to push commit to repo after changes was made
         # TODO: Function to create PR from Wuszek/spksrc to synocommunity/spksrc with correct template
         # TODO: First-run function - ig there is no .version file, make it, fill it, exit.
+        # TODO: Ping discord channel if new release is available
 
     def run(self):
         # TODO: check if Makefile exist = just check if repo is there and if is updated
