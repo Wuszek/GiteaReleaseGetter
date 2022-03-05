@@ -16,12 +16,19 @@ class PullRequest:
         self.latest_release = requests.get(f"{self.repository_path}").json()["name"]
         return self.latest_release
 
-    def read_file(self):
-        get_saved = [line.split() for line in open(".version", "r+")]
-        self.last_saved = get_saved[0][0]
-        return self.last_saved
+    def read_version(self):
+        if os.path.isfile(".version"):
+            get_saved = [line.split() for line in open(".version", "r+")]
+            self.last_saved = get_saved[0][0]
+            return self.last_saved
+        else:
+            file = open(".version", "w")
+            print(self.latest_release, file=file)
+            print("DEBUG: No .version file. Creating and filling one... \t DONE".expandtabs(90))
+            print("DEBUG: First run finished. \t EXITING".expandtabs(90))
+            exit(1)
 
-    def write_file(self, latest_release):
+    def write_version(self, latest_release):
         file = open(".version", "r+")
         file.seek(0)
         file.truncate()
@@ -114,9 +121,9 @@ class PullRequest:
 
     def run(self):
         # TODO: check if Makefile exist = just check if repo is there and if is updated
-        if self.get_latest() != self.read_file():
+        if self.get_latest() != self.read_version():
             print(f"DEBUG : Newer version appeared: {self.latest_release}. Executing... \t IN PROGRESS".expandtabs(90))
-            self.write_file(self.latest_release)
+            self.write_version(self.latest_release)
             self.git_pull_and_checkout()
             self.download_gitea_package()
             self.update_digest_file()
