@@ -21,6 +21,7 @@ changes to update spksrc build files and prepare for Synology package update.
 
 ### Requirements
 ```bash
+sudo apt update
 sudo apt install python3 -y
 pip3 install requests
 sudo apt install bats curl jq -y
