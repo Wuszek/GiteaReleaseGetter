@@ -1,5 +1,9 @@
-# Gitea releaseGetter
+# GiteaReleaseGetter
 
+---
+## Work still in progress...
+
+---
 ### Description
 This script, run periodically, should automatically check for new release of Gitea on github and make all necessary
 changes to update spksrc build files and prepare for Synology package update.
@@ -7,6 +11,13 @@ changes to update spksrc build files and prepare for Synology package update.
 ### Built With
 * python3
 * [discord.sh](https://github.com/ChaoticWeg/discord.sh) - bash integration for Discord webhooks
+
+### Flow diagram
+
+![Flow diagram](media/diag.png "Flow diagram")
+* Green - DONE 
+* Light yellow - IN PROGRESS
+* Yelow - PLANNED
 
 ### Requirements
 ```bash
@@ -30,11 +41,3 @@ fill crontab to run every week:
 ```
 More on how to use crontab: [click](https://www.jcchouinard.com/python-automation-with-cron-on-mac/)
 
-### Flow diagram
-
-![Flow diagram](media/diag.png "Flow diagram")
-* Green - DONE 
-* Light yellow - IN PROGRESS
-* Yelow - PLANNED
----
-### Work still in progress.
