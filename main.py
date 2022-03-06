@@ -11,6 +11,7 @@ class PullRequest:
         self.sha1sum = None
         self.sha256sum = None
         self.md5sum = None
+        self.webhook = None  # insert "webhook url address"
 
     def get_latest(self):
         self.latest_release = requests.get(f"{self.repository_path}").json()["name"]
@@ -24,9 +25,37 @@ class PullRequest:
         else:
             file = open(".version", "w")
             print(self.latest_release, file=file)
-            print("DEBUG: No .version file. Creating and filling one... \t DONE".expandtabs(90))
-            print("DEBUG: First run finished. \t EXITING".expandtabs(90))
-            exit(1)
+            print("DEBUG : No .version file. Creating and filling one... \t DONE".expandtabs(90))
+            exit("DEBUG : First run finished. \t EXITING".expandtabs(90))
+
+    def discord_notify_setup(self):
+        if os.path.isfile("discord.sh"):
+            return True
+        else:
+            try:
+                print("DEBUG : 'discord.sh' script is not present. Downloading... \t IN PROGRESS".expandtabs(90))
+                filename = "discord.sh"
+                url = 'https://raw.githubusercontent.com/ChaoticWeg/discord.sh/master/discord.sh'
+                f = requests.get(url)
+                open(filename, 'wb').write(f.content)
+                os.popen('chmod +x discord.sh').read()
+                print("DEBUG : 'discord.sh' script downloaded. \t DONE".expandtabs(90))
+                return True
+            except Exception:
+                print("ERROR : Something went wrong while downloadind script. \t EXITING".expandtabs(90))
+
+    def discord_notify(self):
+        if self.discord_notify_setup():
+            command = f'./discord.sh \
+                        --webhook-url="{self.webhook}" \
+                        --username "GiteaBot" \
+                        --avatar "https://docs.gitea.io/images/gitea.png" \
+                        --text "**NEW GITEA UPDATE!** \\nRelease: {self.latest_release}"'
+            msg = os.popen(command).read()
+            if "fatal" in msg:
+                print("ERROR : Something went wrong while running 'discord.sh' (webhook?). \t PASS".expandtabs(90))
+            else:
+                print("DEBUG : Discord message sent successfully. \t DONE".expandtabs(90))
 
     def write_version(self, latest_release):
         file = open(".version", "r+")
@@ -44,20 +73,21 @@ class PullRequest:
                      f"upstream https://github.com/SynoCommunity/spksrc.git").read()
             print("DEBUG : Repo setting up...  \t DONE".expandtabs(90))
 
-        # TODO : Uncommented is for testing purposes
-        # os.popen(f"cd spksrc && git pull upstream master && git rebase upstream/master && git checkout -b"
-        #          f" {self.latest_release}").read()
+
         print("DEBUG : Updating repository... \t IN PROGRESS".expandtabs(90))
         try:
-            os.popen(f"cd spksrc && git pull upstream master && git rebase upstream/master").read()
-            print("DEBUG : Updating repository...  \t DONE".expandtabs(90))
+            os.popen(f"cd spksrc && git restore . && git pull upstream master && git rebase upstream/master").read()
+            # TODO : Uncommented is for testing purposes
+            # os.popen(f"cd spksrc && git pull upstream master && git rebase upstream/master && git checkout -b"
+            #          f" {self.latest_release}").read()
+            print("DEBUG : Repository updated successfully.  \t DONE".expandtabs(90))
         except Exception:
-            print("ERROR: Something went wrong while updating repository. \t EXITING".expandtabs(90))
+            print("ERROR : Something went wrong while updating repository. \t EXITING".expandtabs(90))
 
-    def create_digest(self, hash_type):
+    def create_digests(self, hash_type):
         # TODO: Make sure, that this operation is possible. Try/except or if file exist
-        digest = os.popen(f"{hash_type.lower()} {self.latest_release}.tar.gz").read()
-        temp = digest.split()
+        digests = os.popen(f"{hash_type.lower()} {self.latest_release}.tar.gz").read()
+        temp = digests.split()
         temp.reverse()
         temp[0] = f"gitea-{self.latest_release}.tar.gz"
         temp.insert(1, hash_type[:-3])
@@ -76,57 +106,52 @@ class PullRequest:
             except Exception:
                 print("DEBUG : Something went wrong while downloading package. \t EXITING".expandtabs(90))
         try:
-            print("DEBUG : Calculating checksums for digest... \t IN PROGRESS".expandtabs(90))
-            self.sha1sum = self.create_digest("SHA1SUM")
-            self.sha256sum = self.create_digest("SHA256SUM")
-            self.md5sum = self.create_digest("MD5SUM")
-            print("DEBUG : Calculating checksums for digest... \t DONE".expandtabs(90))
+            print("DEBUG : Calculating checksums for digests... \t IN PROGRESS".expandtabs(90))
+            self.sha1sum = self.create_digests("SHA1SUM")
+            self.sha256sum = self.create_digests("SHA256SUM")
+            self.md5sum = self.create_digests("MD5SUM")
+            print("DEBUG : Calculating checksums for digests... \t DONE".expandtabs(90))
         except Exception:
             print("ERROR: Getting checksums went wrong. \t EXITING".expandtabs(90))
             exit(1)
 
-    def update_digest_file(self):
-        # TODO: Insert real path to cross/digest inside spksrc repository.
-        if os.path.isfile("digest"):
-            file = open("digest", "r+")
+    def update_digests_file(self):
+        if os.path.isfile("spksrc/cross/gitea/digests"):
+            file = open("spksrc/cross/gitea/digests", "r+")
             file.seek(0)
             file.truncate()
             file.write(f"{self.sha1sum}\n{self.sha256sum}\n{self.md5sum}\n")
             file.close()
-            print("DEBUG : Updating cross/digest file... \t DONE".expandtabs(90))
+            print("DEBUG : Updating cross/gitea/digests file... \t DONE".expandtabs(90))
         else:
-            print("ERROR : Something went wrong during cross/digest file update. \t EXITING".expandtabs(90))
-            exit(1)
+            exit("ERROR : Something went wrong during cross/gitea/digests file update. \t EXITING".expandtabs(90))
 
     def update_cross_makefile(self):
-        # TODO: Insert real path to cross/Makefile inside spksrc repository.
-        if os.path.isfile("Makefile"):
-            with open("Makefile", "r+") as file:
+        if os.path.isfile("spksrc/cross/gitea/Makefile"):
+            with open("spksrc/cross/gitea/Makefile", "r+") as file:
                 data = file.readlines()
             data[1] = f"PKG_VERS = {self.latest_release[1:]}\n"
-            with open("Makefile", "r+") as file:
+            with open("spksrc/cross/gitea/Makefile", "r+") as file:
                 file.writelines(data)
             file.close()
-            print("DEBUG : Updating Makefile...  \t DONE".expandtabs(90))
+            print("DEBUG : Updating cross/gitea/Makefile...  \t DONE".expandtabs(90))
         else:
-            print("ERROR : Something went wrong during cross/Makefile file update. \t EXITING".expandtabs(90))
-            exit(1)
+            exit("ERROR : Something went wrong during cross/gitea/Makefile file update. \t EXITING".expandtabs(90))
 
         # TODO: Function to update spk/gitea/Makefile
         # TODO: Function to cleanup - delete tar package
         # TODO: Function to push commit to repo after changes was made
         # TODO: Function to create PR from Wuszek/spksrc to synocommunity/spksrc with correct template
-        # TODO: First-run function - ig there is no .version file, make it, fill it, exit.
-        # TODO: Ping discord channel if new release is available
 
     def run(self):
         # TODO: check if Makefile exist = just check if repo is there and if is updated
         if self.get_latest() != self.read_version():
             print(f"DEBUG : Newer version appeared: {self.latest_release}. Executing... \t IN PROGRESS".expandtabs(90))
+            self.discord_notify()
             self.write_version(self.latest_release)
             self.git_pull_and_checkout()
             self.download_gitea_package()
-            self.update_digest_file()
+            self.update_digests_file()
             self.update_cross_makefile()
             print("DEBUG : All jobs finished. \t EXITING".expandtabs(90))
             exit(0)
