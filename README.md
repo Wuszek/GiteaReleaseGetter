@@ -16,11 +16,19 @@ sudo apt install bats curl jq -y
 ```
 
 ### How to run 
-Script has no loop, so it should be run periodically using built-in scheduler.
+Script has no loop, so it should be run periodically using built-in scheduler (e.g. cron).
 
 ```bash
-python3 main.py
+sudo apt update
+sudo apt install cron -y
+sudo systemctl enable cron
+crontab -e
 ```
+fill crontab to run every week:
+```
+0 0 * * 0 /usr/bin/python3 /path/to/file/main.py /path/to/file/logger.log
+```
+More on how to use crontab: [click](https://www.jcchouinard.com/python-automation-with-cron-on-mac/)
 
 ### Flow diagram
 
