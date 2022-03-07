@@ -1,4 +1,6 @@
 import os
+import subprocess
+from subprocess import check_output
 import requests
 
 
@@ -138,8 +140,19 @@ class PullRequest:
         else:
             exit("ERROR : Something went wrong during cross/gitea/Makefile file update. \t EXITING".expandtabs(90))
 
+    def cleanup(self, latest):
+        if os.path.isfile(f"{latest}.tar.gz"):
+            try:
+                check_output(["rm", f"{latest}.tar.gz"])
+                print(f"DEBUG : Removing {latest}.tar.gz from {os.getcwd()}... \t DONE".expandtabs(90))
+            except subprocess.CalledProcessError:
+                print(f"ERROR : Couldn't delete {latest}.tar.gz file. \t PASS".expandtabs(90))
+                pass
+        else:
+            print("DEBUG : There is nothing to delete and nothing happens. \t PASS".expandtabs(90))
+            pass
+
         # TODO: Function to update spk/gitea/Makefile
-        # TODO: Function to cleanup - delete tar package
         # TODO: Function to push commit to repo after changes was made
         # TODO: Function to create PR from Wuszek/spksrc to synocommunity/spksrc with correct template
 
@@ -153,6 +166,7 @@ class PullRequest:
             self.download_gitea_package()
             self.update_digests_file()
             self.update_cross_makefile()
+            self.cleanup(self.latest_release)
             print("DEBUG : All jobs finished. \t EXITING".expandtabs(90))
             exit(0)
         else:
