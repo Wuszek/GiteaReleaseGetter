@@ -30,6 +30,7 @@ class PullRequest:
             print("DEBUG : No .version file. Creating and filling one... \t DONE".expandtabs(90))
             exit("DEBUG : First run finished. \t EXITING".expandtabs(90))
 
+    @staticmethod
     def discord_notify_setup(self):
         if os.path.isfile("discord.sh"):
             return True
@@ -59,12 +60,17 @@ class PullRequest:
             else:
                 print("DEBUG : Discord message sent successfully. \t DONE".expandtabs(90))
 
+    @staticmethod
     def write_version(self, latest_release):
-        file = open(".version", "r+")
-        file.seek(0)
-        file.truncate()
-        print(latest_release, file=file)
+        if os.path.isfile(".version"):
+            file = open(".version", "r+")
+            file.seek(0)
+            file.truncate()
+            print(latest_release, file=file)
+        else:
+            exit("ERROR: Something in writing .version file function went wront. \t EXITING".expandtabs(90))
 
+    @staticmethod
     def git_pull_and_checkout(self):
         if os.path.isdir("spksrc"):
             print("DEBUG : Repo already exists... \t PASS".expandtabs(90))
@@ -74,7 +80,6 @@ class PullRequest:
             os.popen(f"git clone https://github.com/Wuszek/spksrc.git && cd spksrc && git remote add "
                      f"upstream https://github.com/SynoCommunity/spksrc.git").read()
             print("DEBUG : Repo setting up...  \t DONE".expandtabs(90))
-
 
         print("DEBUG : Updating repository... \t IN PROGRESS".expandtabs(90))
         try:
@@ -87,13 +92,15 @@ class PullRequest:
             print("ERROR : Something went wrong while updating repository. \t EXITING".expandtabs(90))
 
     def create_digests(self, hash_type):
-        # TODO: Make sure, that this operation is possible. Try/except or if file exist
-        digests = os.popen(f"{hash_type.lower()} {self.latest_release}.tar.gz").read()
-        temp = digests.split()
-        temp.reverse()
-        temp[0] = f"gitea-{self.latest_release}.tar.gz"
-        temp.insert(1, hash_type[:-3])
-        return " ".join(temp)
+        if os.path.isfile(f"{self.latest_release}.tar.gz"):
+            digests = os.popen(f"{hash_type.lower()} {self.latest_release}.tar.gz").read()
+            temp = digests.split()
+            temp.reverse()
+            temp[0] = f"gitea-{self.latest_release}.tar.gz"
+            temp.insert(1, hash_type[:-3])
+            return " ".join(temp)
+        else:
+            exit(f"ERROR: Package {self.latest_release}tar.gz doesn't exist. \t EXITING".expandtabs(90))
 
     def download_gitea_package(self):
         if os.path.isfile(f"{self.latest_release}.tar.gz"):
@@ -147,11 +154,11 @@ class PullRequest:
             data[1] = f"PKG_VERS = {self.latest_release[1:]}\n"
             revision = int(data[2][10:]) + 1
             data[2] = f"SPK_REV = {revision}\n"
-            data[8] = f'''{data[8][:-2]}.</br> {revision}. Update to {self.latest_release}"\n'''
-
-            print(data[1])
-            print(data[2])
-            print(data[8])
+            data[8] = f'''{data[8][:-2]}<br/> {revision}. Update to {self.latest_release}."\n'''
+            with open("spksrc/spk/gitea/Makefile", "r+") as file:
+                file.writelines(data)
+            file.close()
+            print("DEBUG : Updating spk/gitea/Makefile...  \t DONE".expandtabs(90))
         else:
             exit("ERROR : Something went wrong during spk/gitea/Makefile file update \t EXITING".expandtabs(90))
 
@@ -168,22 +175,21 @@ class PullRequest:
             print("DEBUG : There is nothing to delete and nothing happens. \t PASS".expandtabs(90))
             pass
 
-        # TODO: Function to update spk/gitea/Makefile
+        # TODO: Uncomment git_pull_and_checkout operation 
         # TODO: Function to push commit to repo after changes was made
         # TODO: Function to create PR from Wuszek/spksrc to synocommunity/spksrc with correct template
 
     def run(self):
-        # TODO: check if Makefile exist = just check if repo is there and if is updated
         if self.get_latest() != self.read_version():
             print(f"DEBUG : Newer version appeared: {self.latest_release}. Executing... \t IN PROGRESS".expandtabs(90))
-            # self.discord_notify()
-            # self.write_version(self.latest_release)
-            # self.git_pull_and_checkout()
-            # self.download_gitea_package()
-            # self.update_digests_file()
-            # self.update_cross_makefile()
-            # self.cleanup(self.latest_release)
+            self.discord_notify()
+            self.write_version(self.latest_release)
+            self.git_pull_and_checkout()
+            self.download_gitea_package()
+            self.update_digests_file()
+            self.update_cross_makefile()
             self.update_gitea_makefile()
+            self.cleanup(self.latest_release)
             print("DEBUG : All jobs finished. \t EXITING".expandtabs(90))
             exit(0)
         else:
