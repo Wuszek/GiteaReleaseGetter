@@ -140,6 +140,22 @@ class PullRequest:
         else:
             exit("ERROR : Something went wrong during cross/gitea/Makefile file update. \t EXITING".expandtabs(90))
 
+    def update_gitea_makefile(self):
+        if os.path.isfile("spksrc/spk/gitea/Makefile"):
+            with open("spksrc/spk/gitea/Makefile", "r+") as file:
+                data = file.readlines()
+            data[1] = f"PKG_VERS = {self.latest_release[1:]}\n"
+            revision = int(data[2][10:]) + 1
+            data[2] = f"SPK_REV = {revision}\n"
+            data[8] = f'''{data[8][:-2]}.</br> {revision}. Update to {self.latest_release}"\n'''
+
+            print(data[1])
+            print(data[2])
+            print(data[8])
+        else:
+            exit("ERROR : Something went wrong during spk/gitea/Makefile file update \t EXITING".expandtabs(90))
+
+    @staticmethod
     def cleanup(self, latest):
         if os.path.isfile(f"{latest}.tar.gz"):
             try:
@@ -160,13 +176,14 @@ class PullRequest:
         # TODO: check if Makefile exist = just check if repo is there and if is updated
         if self.get_latest() != self.read_version():
             print(f"DEBUG : Newer version appeared: {self.latest_release}. Executing... \t IN PROGRESS".expandtabs(90))
-            self.discord_notify()
-            self.write_version(self.latest_release)
-            self.git_pull_and_checkout()
-            self.download_gitea_package()
-            self.update_digests_file()
-            self.update_cross_makefile()
-            self.cleanup(self.latest_release)
+            # self.discord_notify()
+            # self.write_version(self.latest_release)
+            # self.git_pull_and_checkout()
+            # self.download_gitea_package()
+            # self.update_digests_file()
+            # self.update_cross_makefile()
+            # self.cleanup(self.latest_release)
+            self.update_gitea_makefile()
             print("DEBUG : All jobs finished. \t EXITING".expandtabs(90))
             exit(0)
         else:
