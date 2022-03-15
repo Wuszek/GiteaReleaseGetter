@@ -30,7 +30,6 @@ class PullRequest:
             print("DEBUG : No .version file. Creating and filling one... \t DONE".expandtabs(90))
             exit("DEBUG : First run finished. \t EXITING".expandtabs(90))
 
-    @staticmethod
     def discord_notify_setup(self):
         if os.path.isfile("discord.sh"):
             return True
@@ -60,7 +59,6 @@ class PullRequest:
             else:
                 print("DEBUG : Discord message sent successfully. \t DONE".expandtabs(90))
 
-    @staticmethod
     def write_version(self, latest_release):
         if os.path.isfile(".version"):
             file = open(".version", "r+")
@@ -70,7 +68,6 @@ class PullRequest:
         else:
             exit("ERROR: Something in writing .version file function went wront. \t EXITING".expandtabs(90))
 
-    @staticmethod
     def git_pull_and_checkout(self):
         if os.path.isdir("spksrc"):
             print("DEBUG : Repo already exists... \t PASS".expandtabs(90))
@@ -83,10 +80,10 @@ class PullRequest:
 
         print("DEBUG : Updating repository... \t IN PROGRESS".expandtabs(90))
         try:
-            os.popen(f"cd spksrc && git restore . && git pull upstream master && git rebase upstream/master").read()
+            # os.popen(f"cd spksrc && git restore . && git pull upstream master && git rebase upstream/master").read()
             # TODO : Uncommented is for testing purposes
-            # os.popen(f"cd spksrc && git pull upstream master && git rebase upstream/master && git checkout -b"
-            #          f" {self.latest_release}").read()
+            os.popen(f"cd spksrc && git pull upstream master && git rebase upstream/master && git checkout -b"
+                     f" {self.latest_release}").read()
             print("DEBUG : Repository updated successfully.  \t DONE".expandtabs(90))
         except Exception:
             print("ERROR : Something went wrong while updating repository. \t EXITING".expandtabs(90))
@@ -96,7 +93,7 @@ class PullRequest:
             digests = os.popen(f"{hash_type.lower()} {self.latest_release}.tar.gz").read()
             temp = digests.split()
             temp.reverse()
-            temp[0] = f"gitea-{self.latest_release}.tar.gz"
+            temp[0] = f"gitea-{self.latest_release[1:]}.tar.gz"
             temp.insert(1, hash_type[:-3])
             return " ".join(temp)
         else:
@@ -151,7 +148,7 @@ class PullRequest:
         if os.path.isfile("spksrc/spk/gitea/Makefile"):
             with open("spksrc/spk/gitea/Makefile", "r+") as file:
                 data = file.readlines()
-            data[1] = f"PKG_VERS = {self.latest_release[1:]}\n"
+            data[1] = f"SPK_VERS = {self.latest_release[1:]}\n"
             revision = int(data[2][10:]) + 1
             data[2] = f"SPK_REV = {revision}\n"
             data[8] = f'''{data[8][:-2]}<br/> {revision}. Update to {self.latest_release}."\n'''
@@ -162,7 +159,6 @@ class PullRequest:
         else:
             exit("ERROR : Something went wrong during spk/gitea/Makefile file update \t EXITING".expandtabs(90))
 
-    @staticmethod
     def cleanup(self, latest):
         if os.path.isfile(f"{latest}.tar.gz"):
             try:
