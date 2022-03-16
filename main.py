@@ -151,7 +151,9 @@ class PullRequest:
             data[1] = f"SPK_VERS = {self.latest_release[1:]}\n"
             revision = int(data[2][10:]) + 1
             data[2] = f"SPK_REV = {revision}\n"
-            data[8] = f'''{data[8][:-2]}<br/> {revision}. Update to {self.latest_release}."\n'''
+            # data[8] = f'''{data[8][:-2]}<br/> {revision}. Update to {self.latest_release}."\n'''
+            # According to info from @hgy59 "Avoid cumulative change log"
+            data[8] = f'''CHANGELOG = "1. Update to {self.latest_release}."\n'''
             with open("spksrc/spk/gitea/Makefile", "r+") as file:
                 file.writelines(data)
             file.close()
