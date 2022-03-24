@@ -133,12 +133,28 @@ class PullRequest:
             with open("spksrc/cross/gitea/Makefile", "r+") as file:
                 data = file.readlines()
             data[1] = f"PKG_VERS = {self.latest_release[1:]}\n"
-            with open("spksrc/cross/gitea/Makefile", "r+") as file:
+            with open("spksrc/cross/gitea/Makefile", "w") as file:
                 file.writelines(data)
             file.close()
             print("DEBUG : Updating cross/gitea/Makefile...  \t DONE".expandtabs(90))
         else:
             exit("ERROR : Something went wrong during cross/gitea/Makefile file update. \t EXITING".expandtabs(90))
+
+    def update_gitea_makefile(self):
+        if os.path.isfile("spksrc/spk/gitea/Makefile"):
+            with open("spksrc/spk/gitea/Makefile", "r+") as file:
+                data = file.readlines()
+            file.close()
+            data[1] = f"SPK_VERS = {self.latest_release[1:]}\n"
+            revision = int(data[2][10:]) + 1
+            data[2] = f"SPK_REV = {revision}\n"
+            data[8] = f'''CHANGELOG = "1. Update to {self.latest_release}."\n'''
+            with open("spksrc/spk/gitea/Makefile", "w") as file:
+                file.writelines(data)
+            file.close()
+            print("DEBUG : Updating spk/gitea/Makefile...  \t DONE".expandtabs(90))
+        else:
+            exit("ERROR : Something went wrong during spk/gitea/Makefile file update \t EXITING".expandtabs(90))
 
     def cleanup(self, latest):
         if os.path.isfile(f"{latest}.tar.gz"):
@@ -161,7 +177,7 @@ class PullRequest:
         if self.get_latest() != self.read_version():
             print(f"DEBUG : Newer version appeared: {self.latest_release}. Executing... \t IN PROGRESS".expandtabs(90))
             self.discord_notify()
-            self.write_version(self.latest_release)
+            # self.write_version(self.latest_release)
             self.git_pull_and_checkout()
             self.download_gitea_package()
             self.update_digests_file()
