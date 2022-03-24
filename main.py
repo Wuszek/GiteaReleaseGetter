@@ -60,10 +60,13 @@ class PullRequest:
                 print("DEBUG : Discord message sent successfully. \t DONE".expandtabs(90))
 
     def write_version(self, latest_release):
-        file = open(".version", "r+")
-        file.seek(0)
-        file.truncate()
-        print(latest_release, file=file)
+        if os.path.isfile(".version"):
+            file = open(".version", "r+")
+            file.seek(0)
+            file.truncate()
+            print(latest_release, file=file)
+        else:
+            exit("ERROR: Something in writing .version file function went wront. \t EXITING".expandtabs(90))
 
     def git_pull_and_checkout(self):
         if os.path.isdir("spksrc"):
@@ -75,25 +78,26 @@ class PullRequest:
                      f"upstream https://github.com/SynoCommunity/spksrc.git").read()
             print("DEBUG : Repo setting up...  \t DONE".expandtabs(90))
 
-
         print("DEBUG : Updating repository... \t IN PROGRESS".expandtabs(90))
         try:
-            os.popen(f"cd spksrc && git restore . && git pull upstream master && git rebase upstream/master").read()
+            # os.popen(f"cd spksrc && git restore . && git pull upstream master && git rebase upstream/master").read()
             # TODO : Uncommented is for testing purposes
-            # os.popen(f"cd spksrc && git pull upstream master && git rebase upstream/master && git checkout -b"
-            #          f" {self.latest_release}").read()
+            os.popen(f"cd spksrc && git pull upstream master && git rebase upstream/master && git checkout -b"
+                     f" {self.latest_release}").read()
             print("DEBUG : Repository updated successfully.  \t DONE".expandtabs(90))
         except Exception:
             print("ERROR : Something went wrong while updating repository. \t EXITING".expandtabs(90))
 
     def create_digests(self, hash_type):
-        # TODO: Make sure, that this operation is possible. Try/except or if file exist
-        digests = os.popen(f"{hash_type.lower()} {self.latest_release}.tar.gz").read()
-        temp = digests.split()
-        temp.reverse()
-        temp[0] = f"gitea-{self.latest_release}.tar.gz"
-        temp.insert(1, hash_type[:-3])
-        return " ".join(temp)
+        if os.path.isfile(f"{self.latest_release}.tar.gz"):
+            digests = os.popen(f"{hash_type.lower()} {self.latest_release}.tar.gz").read()
+            temp = digests.split()
+            temp.reverse()
+            temp[0] = f"gitea-{self.latest_release[1:]}.tar.gz"
+            temp.insert(1, hash_type[:-3])
+            return " ".join(temp)
+        else:
+            exit(f"ERROR: Package {self.latest_release}tar.gz doesn't exist. \t EXITING".expandtabs(90))
 
     def download_gitea_package(self):
         if os.path.isfile(f"{self.latest_release}.tar.gz"):
@@ -168,12 +172,11 @@ class PullRequest:
             print("DEBUG : There is nothing to delete and nothing happens. \t PASS".expandtabs(90))
             pass
 
-        # TODO: Function to update spk/gitea/Makefile
+        # TODO: Uncomment git_pull_and_checkout operation 
         # TODO: Function to push commit to repo after changes was made
         # TODO: Function to create PR from Wuszek/spksrc to synocommunity/spksrc with correct template
 
     def run(self):
-        # TODO: check if Makefile exist = just check if repo is there and if is updated
         if self.get_latest() != self.read_version():
             print(f"DEBUG : Newer version appeared: {self.latest_release}. Executing... \t IN PROGRESS".expandtabs(90))
             self.discord_notify()
@@ -182,6 +185,7 @@ class PullRequest:
             self.download_gitea_package()
             self.update_digests_file()
             self.update_cross_makefile()
+            self.update_gitea_makefile()
             self.cleanup(self.latest_release)
             print("DEBUG : All jobs finished. \t EXITING".expandtabs(90))
             exit(0)
