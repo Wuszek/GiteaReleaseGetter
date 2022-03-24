@@ -180,7 +180,7 @@ class PullRequest:
         if self.get_latest() != self.read_version():
             print(f"DEBUG : Newer version appeared: {self.latest_release}. Executing... \t IN PROGRESS".expandtabs(90))
             self.discord_notify()
-            # self.write_version(self.latest_release)
+            self.write_version(self.latest_release)
             self.git_pull_and_checkout()
             self.download_gitea_package()
             self.update_digests_file()
