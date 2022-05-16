@@ -16,7 +16,7 @@ class PullRequest:
         self.webhook = None  # insert "webhook url address"
 
     def get_latest(self):
-        self.latest_release = requests.get(f"{self.repository_path}").json()["name"]
+        self.latest_release = requests.get(f"{self.repository_path}").json()["tag_name"]
         return self.latest_release
 
     def read_version(self):
@@ -80,10 +80,10 @@ class PullRequest:
 
         print("DEBUG : Updating repository... \t IN PROGRESS".expandtabs(90))
         try:
+            # INFO : Commented is for testing purposes
             # os.popen(f"cd spksrc && git restore . && git pull upstream master && git rebase upstream/master").read()
-            # TODO : Uncommented is for testing purposes
-            os.popen(f"cd spksrc && git pull upstream master && git rebase upstream/master && git checkout -b"
-                     f" {self.latest_release}").read()
+            os.popen(f"cd spksrc && git checkout master && git pull upstream master && git rebase upstream/master "
+                     f"&& git checkout -b {self.latest_release}").read()
             print("DEBUG : Repository updated successfully.  \t DONE".expandtabs(90))
         except Exception:
             print("ERROR : Something went wrong while updating repository. \t EXITING".expandtabs(90))
