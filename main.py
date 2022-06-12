@@ -30,22 +30,6 @@ class PullRequest:
             print("DEBUG : No .version file. Creating and filling one... \t DONE".expandtabs(90))
             exit("DEBUG : First run finished. \t EXITING".expandtabs(90))
 
-    def discord_notify_setup(self):
-        if os.path.isfile("discord.sh"):
-            return True
-        else:
-            try:
-                print("DEBUG : 'discord.sh' script is not present. Downloading... \t IN PROGRESS".expandtabs(90))
-                filename = "discord.sh"
-                url = 'https://raw.githubusercontent.com/ChaoticWeg/discord.sh/master/discord.sh'
-                f = requests.get(url)
-                open(filename, 'wb').write(f.content)
-                os.popen('chmod +x discord.sh').read()
-                print("DEBUG : 'discord.sh' script downloaded. \t DONE".expandtabs(90))
-                return True
-            except Exception:
-                print("ERROR : Something went wrong while downloadind script. \t EXITING".expandtabs(90))
-
     def discord_notify(self, webhook):
         content = f"**NEW GITEA UPDATE!** \nRelease: {self.latest_release}."
         payload = {'username': 'GiteaBot', "content": {content}}
