@@ -46,18 +46,15 @@ class PullRequest:
             except Exception:
                 print("ERROR : Something went wrong while downloadind script. \t EXITING".expandtabs(90))
 
-    def discord_notify(self):
-        if self.discord_notify_setup():
-            command = f'./discord.sh \
-                        --webhook-url="{self.webhook}" \
-                        --username "GiteaBot" \
-                        --avatar "https://docs.gitea.io/images/gitea.png" \
-                        --text "**NEW GITEA UPDATE!** \\nRelease: {self.latest_release}"'
-            msg = os.popen(command).read()
-            if "fatal" in msg:
-                print("ERROR : Something went wrong while running 'discord.sh' (webhook?). \t PASS".expandtabs(90))
-            else:
-                print("DEBUG : Discord message sent successfully. \t DONE".expandtabs(90))
+    def discord_notify(self, webhook):
+        content = f"**NEW GITEA UPDATE!** \nRelease: {self.latest_release}."
+        payload = {'username': 'GiteaBot', "content": {content}}
+        try:
+            requests.post(webhook, data=payload)
+            print("DEBUG : Discord message sent successfully. \t DONE".expandtabs(90))
+        except Exception as e:
+            print(f"ERROR : Something went wrong while sending notification. Msg: {e}\t PASS".expandtabs(90))
+            pass
 
     def write_version(self, latest_release):
         if os.path.isfile(".version"):
@@ -179,7 +176,7 @@ class PullRequest:
     def run(self):
         if self.get_latest() != self.read_version():
             print(f"DEBUG : Newer version appeared: {self.latest_release}. Executing... \t IN PROGRESS".expandtabs(90))
-            self.discord_notify()
+            self.discord_notify("https://webhook.url")
             self.write_version(self.latest_release)
             self.git_pull_and_checkout()
             self.download_gitea_package()
