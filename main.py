@@ -1,7 +1,7 @@
 import os
 import subprocess
-from subprocess import check_output
 import requests
+from subprocess import check_output
 
 
 class PullRequest:
@@ -30,17 +30,18 @@ class PullRequest:
             print("DEBUG : No .version file. Creating and filling one... \t DONE".expandtabs(90))
             exit("DEBUG : First run finished. \t EXITING".expandtabs(90))
 
-    def discord_notify(self, webhook):
+    def discord_notify(self):
         content = f"**NEW GITEA UPDATE!** \nRelease: {self.latest_release}."
         payload = {'username': 'GiteaBot', "content": {content}}
         try:
-            requests.post(webhook, data=payload)
+            requests.post(self.webhook, data=payload)
             print("DEBUG : Discord message sent successfully. \t DONE".expandtabs(90))
         except Exception as e:
             print(f"ERROR : Something went wrong while sending notification. Msg: {e}\t PASS".expandtabs(90))
             pass
 
-    def write_version(self, latest_release):
+    @staticmethod
+    def write_version(latest_release):
         if os.path.isfile(".version"):
             file = open(".version", "r+")
             file.seek(0)
@@ -141,7 +142,8 @@ class PullRequest:
         else:
             exit("ERROR : Something went wrong during spk/gitea/Makefile file update \t EXITING".expandtabs(90))
 
-    def cleanup(self, latest):
+    @staticmethod
+    def cleanup(latest):
         if os.path.isfile(f"{latest}.tar.gz"):
             try:
                 check_output(["rm", f"{latest}.tar.gz"])
@@ -160,7 +162,7 @@ class PullRequest:
     def run(self):
         if self.get_latest() != self.read_version():
             print(f"DEBUG : Newer version appeared: {self.latest_release}. Executing... \t IN PROGRESS".expandtabs(90))
-            self.discord_notify("https://webhook.url")
+            self.discord_notify()
             self.write_version(self.latest_release)
             self.git_pull_and_checkout()
             self.download_gitea_package()

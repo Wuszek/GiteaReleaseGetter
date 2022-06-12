@@ -10,7 +10,6 @@ changes to update spksrc build files and prepare for Synology package update.
 
 ### Built With
 * python3
-* [discord.sh](https://github.com/ChaoticWeg/discord.sh) - bash integration for Discord webhooks
 
 ### Flow diagram
 
