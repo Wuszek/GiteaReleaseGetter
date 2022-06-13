@@ -10,7 +10,6 @@ changes to update spksrc build files and prepare for Synology package update.
 
 ### Built With
 * python3
-* [discord.sh](https://github.com/ChaoticWeg/discord.sh) - bash integration for Discord webhooks
 
 ### Flow diagram
 
@@ -22,13 +21,16 @@ changes to update spksrc build files and prepare for Synology package update.
 ### Requirements
 ```bash
 sudo apt update
-sudo apt install python3 -y
+sudo apt install python3 pip bats curl jq git wget -y
 pip3 install requests
-sudo apt install bats curl jq -y
 ```
 
 ### How to run 
 Script has no loop, so it should be run periodically using built-in scheduler (e.g. cron).
+
+```bash
+python3 main.py
+```
 
 ```bash
 sudo apt update

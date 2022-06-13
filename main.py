@@ -1,7 +1,7 @@
 import os
 import subprocess
-from subprocess import check_output
 import requests
+from subprocess import check_output
 
 
 class PullRequest:
@@ -30,36 +30,18 @@ class PullRequest:
             print("DEBUG : No .version file. Creating and filling one... \t DONE".expandtabs(90))
             exit("DEBUG : First run finished. \t EXITING".expandtabs(90))
 
-    def discord_notify_setup(self):
-        if os.path.isfile("discord.sh"):
-            return True
-        else:
-            try:
-                print("DEBUG : 'discord.sh' script is not present. Downloading... \t IN PROGRESS".expandtabs(90))
-                filename = "discord.sh"
-                url = 'https://raw.githubusercontent.com/ChaoticWeg/discord.sh/master/discord.sh'
-                f = requests.get(url)
-                open(filename, 'wb').write(f.content)
-                os.popen('chmod +x discord.sh').read()
-                print("DEBUG : 'discord.sh' script downloaded. \t DONE".expandtabs(90))
-                return True
-            except Exception:
-                print("ERROR : Something went wrong while downloadind script. \t EXITING".expandtabs(90))
-
     def discord_notify(self):
-        if self.discord_notify_setup():
-            command = f'./discord.sh \
-                        --webhook-url="{self.webhook}" \
-                        --username "GiteaBot" \
-                        --avatar "https://docs.gitea.io/images/gitea.png" \
-                        --text "**NEW GITEA UPDATE!** \\nRelease: {self.latest_release}"'
-            msg = os.popen(command).read()
-            if "fatal" in msg:
-                print("ERROR : Something went wrong while running 'discord.sh' (webhook?). \t PASS".expandtabs(90))
-            else:
-                print("DEBUG : Discord message sent successfully. \t DONE".expandtabs(90))
+        content = f"**NEW GITEA UPDATE!** \nRelease: {self.latest_release}."
+        payload = {'username': 'GiteaBot', "content": {content}}
+        try:
+            requests.post(self.webhook, data=payload)
+            print("DEBUG : Discord message sent successfully. \t DONE".expandtabs(90))
+        except Exception as e:
+            print(f"ERROR : Something went wrong while sending notification. Msg: {e}\t PASS".expandtabs(90))
+            pass
 
-    def write_version(self, latest_release):
+    @staticmethod
+    def write_version(latest_release):
         if os.path.isfile(".version"):
             file = open(".version", "r+")
             file.seek(0)
@@ -160,7 +142,8 @@ class PullRequest:
         else:
             exit("ERROR : Something went wrong during spk/gitea/Makefile file update \t EXITING".expandtabs(90))
 
-    def cleanup(self, latest):
+    @staticmethod
+    def cleanup(latest):
         if os.path.isfile(f"{latest}.tar.gz"):
             try:
                 check_output(["rm", f"{latest}.tar.gz"])
