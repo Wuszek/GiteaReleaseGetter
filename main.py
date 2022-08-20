@@ -63,30 +63,27 @@ class PullRequest:
             self.repository = Repo(f"{os.getcwd()}/spksrc")
             pass
         else:
-
-            print("DEBUG : Repo does not exist. Setting up... \t IN PROGRESS".expandtabs(150))
-            Repo.clone_from(self.remote, f"{os.getcwd()}/spksrc")
-            self.repository = Repo(f"{os.getcwd()}/spksrc")
-            cmd1 = f"cd spksrc && git remote add " \
-                   f"upstream https://github.com/SynoCommunity/spksrc.git"
-            p1 = subprocess.Popen(cmd1, stdout=subprocess.PIPE, shell=True)
-            p1.communicate()
-            print("DEBUG : Repo setting up...  \t DONE".expandtabs(150))
-
+            try:
+                print("DEBUG : Repo does not exist. Setting up... \t IN PROGRESS".expandtabs(150))
+                Repo.clone_from(self.remote, f"{os.getcwd()}/spksrc")
+                self.repository = Repo(f"{os.getcwd()}/spksrc")
+                self.repository.create_remote("upstream", url="https://github.com/SynoCommunity/spksrc.git")
+                print("DEBUG : Repo setting up...  \t DONE".expandtabs(150))
+            except Exception as e:
+                exit("ERROR : Something went wrong while updating repository. \t EXITING".expandtabs(150))
         print("DEBUG : Updating repository... \t IN PROGRESS".expandtabs(150))
         try:
             # TODO : Check, if branch already exists (now it stays on master if branch exists)
             # TODO: Change cmd to use real branch name
             # cmd2 = f"cd spksrc && git checkout master && git pull upstream master && git rebase upstream/master " \
             #        f"&& git checkout -b {self.latest_release}"
-
             cmd2 = f"cd spksrc && git checkout master && git pull upstream master && git rebase upstream/master " \
                    f"&& git checkout -b test_branch"
             p2 = subprocess.Popen(cmd2, stdout=subprocess.PIPE, shell=True)
             p2.communicate()
             print("DEBUG : Repository updated successfully.  \t DONE".expandtabs(150))
         except Exception:
-            print("ERROR : Something went wrong while updating repository. \t EXITING".expandtabs(150))
+            exit("ERROR : Something went wrong while updating repository. \t EXITING".expandtabs(150))
 
     def create_digests(self, hash_type):
         if os.path.isfile(f"{self.latest_release}.tar.gz"):
@@ -207,7 +204,7 @@ class PullRequest:
             self.update_cross_makefile()
             self.update_gitea_makefile()
             self.commit_changes()
-            self.push_changes()
+            # self.push_changes()
             self.cleanup(self.latest_release)
             print("DEBUG : All jobs finished. \t EXITING".expandtabs(150))
             exit(0)
