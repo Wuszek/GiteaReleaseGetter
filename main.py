@@ -1,6 +1,7 @@
 import os
 import subprocess
 import requests
+import git
 from subprocess import check_output
 from git import Repo
 from decouple import config
@@ -73,17 +74,24 @@ class PullRequest:
                 exit("ERROR : Something went wrong while updating repository. \t EXITING".expandtabs(150))
         print("DEBUG : Updating repository... \t IN PROGRESS".expandtabs(150))
         try:
-            # TODO : Check, if branch already exists (now it stays on master if branch exists)
             # TODO: Change cmd to use real branch name
             # cmd2 = f"cd spksrc && git checkout master && git pull upstream master && git rebase upstream/master " \
             #        f"&& git checkout -b {self.latest_release}"
-            cmd2 = f"cd spksrc && git checkout master && git pull upstream master && git rebase upstream/master " \
-                   f"&& git checkout -b test_branch"
+
+
+            cmd2 = f"cd spksrc && git checkout master && git pull upstream master && git rebase upstream/master"
             p2 = subprocess.Popen(cmd2, stdout=subprocess.PIPE, shell=True)
             p2.communicate()
+
+            branches = git.Git(f"{os.getcwd()}/spksrc").branch("--all").split()
+            if self.latest_release in branches:
+                self.repository.git.checkout(f"{self.latest_release}")
+            else:
+                self.repository.git.checkout('-b', f"{self.latest_release}")
+
             print("DEBUG : Repository updated successfully.  \t DONE".expandtabs(150))
-        except Exception:
-            exit("ERROR : Something went wrong while updating repository. \t EXITING".expandtabs(150))
+        except Exception as e:
+            exit(f"ERROR : Something went wrong while updating repository. {e}\t EXITING".expandtabs(150))
 
     def create_digests(self, hash_type):
         if os.path.isfile(f"{self.latest_release}.tar.gz"):
@@ -199,11 +207,11 @@ class PullRequest:
             self.discord_notify()
             # self.write_version(self.latest_release)
             self.git_pull_and_checkout()
-            self.download_gitea_package()
-            self.update_digests_file()
-            self.update_cross_makefile()
-            self.update_gitea_makefile()
-            self.commit_changes()
+            # self.download_gitea_package()
+            # self.update_digests_file()
+            # self.update_cross_makefile()
+            # self.update_gitea_makefile()
+            # self.commit_changes()
             # self.push_changes()
             self.cleanup(self.latest_release)
             print("DEBUG : All jobs finished. \t EXITING".expandtabs(150))
