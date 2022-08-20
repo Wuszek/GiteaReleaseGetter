@@ -22,7 +22,8 @@ class PullRequest:
         self.username = config('username', default='')
         self.email = config('email', default='')
         self.token = config('token', default='')
-        self.remote = f"https://{self.username}:{self.token}@github.com/wkobiela/spksrc.git"
+        self.fork_url = config('fork_url', default='')
+        self.remote = f"https://{self.username}:{self.token}@{self.fork_url}"
 
     def get_latest(self):
         self.latest_release = requests.get(f"{self.repository_path}").json()["tag_name"]
@@ -57,7 +58,7 @@ class PullRequest:
             file.truncate()
             print(latest_release, file=file)
         else:
-            exit("ERROR: Something in writing .version file function went wront. \t EXITING".expandtabs(150))
+            exit("ERROR: Something in writing .version file function went wrong. \t EXITING".expandtabs(150))
 
     def git_pull_and_checkout(self):
         if os.path.isdir("spksrc"):
@@ -120,8 +121,8 @@ class PullRequest:
             self.sha256sum = self.create_digests("SHA256SUM")
             self.md5sum = self.create_digests("MD5SUM")
             print("DEBUG : Calculating checksums for digests... \t DONE".expandtabs(150))
-        except Exception:
-            exit("ERROR: Getting checksums went wrong. \t EXITING".expandtabs(150))
+        except Exception as e:
+            exit(f"ERROR: Getting checksums went wrong. {e} \t EXITING".expandtabs(150))
 
     def update_digests_file(self):
         if os.path.isfile("spksrc/cross/gitea/digests"):
@@ -176,9 +177,7 @@ class PullRequest:
         try:
             origin = self.repository.remote(name="origin")
             self.repository.head.reference.set_tracking_branch(origin.refs.master).checkout()
-            # TODO: change to real branch name
-            #origin.push(self.latest_release)
-            origin.push("test_branch")
+            origin.push(self.latest_release)
             print("DEBUG : Pushing changes... \t DONE".expandtabs(150))
         except Exception as e:
             print(f"EXCEPTION: {e}")
@@ -203,14 +202,14 @@ class PullRequest:
         if self.get_latest() != self.read_version():
             print(f"DEBUG : Newer version appeared: {self.latest_release}. Executing... \t IN PROGRESS".expandtabs(150))
             self.discord_notify()
-            # self.write_version(self.latest_release)
+            self.write_version(self.latest_release)
             self.git_pull_and_checkout()
             self.download_gitea_package()
-            # self.update_digests_file()
-            # self.update_cross_makefile()
-            # self.update_gitea_makefile()
-            # self.commit_changes()
-            # self.push_changes()
+            self.update_digests_file()
+            self.update_cross_makefile()
+            self.update_gitea_makefile()
+            self.commit_changes()
+            self.push_changes()
             self.cleanup(self.latest_release)
             print("DEBUG : All jobs finished. \t EXITING".expandtabs(150))
             exit(0)

@@ -1,15 +1,22 @@
 # GiteaReleaseGetter
 
 ---
-## Work still in progress...
+## Work still in progress
 
 ---
 ### Description
 This script, run periodically, should automatically check for new release of Gitea on github and make all necessary
 changes to update spksrc build files and prepare for Synology package update.
 
-### Built With
-* python3
+### How to
+To run this script, create `.env` file with config:
+```bash
+username = "username"
+email = "username@gmail.com"
+token = "github_token"
+fork_url = "github.com/username/spksrc.git"
+webhook = "discord_webhook_url"
+```
 
 ### Flow diagram
 
@@ -22,7 +29,7 @@ changes to update spksrc build files and prepare for Synology package update.
 ```bash
 sudo apt update
 sudo apt install python3 pip bats curl jq git wget -y
-pip3 install requests
+pip3 install -r requirements.txt
 ```
 
 ### How to run 
