@@ -183,14 +183,15 @@ class PullRequest:
             print(f"EXCEPTION: {e}")
             sys.exit("DEBUG : Something went wrong while pushing changes. \t EXITING".expandtabs(150))
 
-    @staticmethod
-    def cleanup(latest):
+    def cleanup(self, latest):
         if os.path.isfile(f"{latest}.tar.gz"):
             try:
-                check_output(["rm", f"{latest}.tar.gz"])
-                print(f"DEBUG : Removing {latest}.tar.gz from {os.getcwd()}... \t DONE".expandtabs(150))
+                check_output(["rm", f"gitea-{self.latest_release[1:]}.tar.gz"])
+                print(f"DEBUG : Removing gitea-{self.latest_release[1:]}.tar.gz from {os.getcwd()}... "
+                      f"\t DONE".expandtabs(150))
             except subprocess.CalledProcessError:
-                print(f"ERROR : Couldn't delete {latest}.tar.gz file. \t EXITING".expandtabs(150))
+                print(f"ERROR : Couldn't delete gitea-{self.latest_release[1:]}.tar.gz file. "
+                      f"\t EXITING".expandtabs(150))
         else:
             print("DEBUG : There is nothing to delete and nothing happens. \t PASS".expandtabs(150))
 
@@ -207,7 +208,7 @@ class PullRequest:
             self.update_cross_makefile()
             self.update_gitea_makefile()
             self.commit_changes()
-            self.push_changes()
+            # self.push_changes()
             self.cleanup(self.latest_release)
             print("DEBUG : All jobs finished. \t EXITING".expandtabs(150))
             sys.exit(0)
