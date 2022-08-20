@@ -2,6 +2,7 @@ import os
 import subprocess
 import requests
 import git
+import wget
 from subprocess import check_output
 from git import Repo
 from decouple import config
@@ -91,25 +92,25 @@ class PullRequest:
             exit(f"ERROR : Something went wrong while updating repository. {e}\t EXITING".expandtabs(150))
 
     def create_digests(self, hash_type):
-        if os.path.isfile(f"{self.latest_release}.tar.gz"):
-            digests = os.popen(f"{hash_type.lower()} {self.latest_release}.tar.gz").read()
+        if os.path.isfile(f"gitea-{self.latest_release[1:]}.tar.gz"):
+            digests = os.popen(f"{hash_type.lower()} gitea-{self.latest_release[1:]}.tar.gz").read()
             temp = digests.split()
             temp.reverse()
             temp[0] = f"gitea-{self.latest_release[1:]}.tar.gz"
             temp.insert(1, hash_type[:-3])
             return " ".join(temp)
         else:
-            exit(f"ERROR: Package {self.latest_release}tar.gz doesn't exist. \t EXITING".expandtabs(150))
+            exit(f"ERROR: Package gitea-{self.latest_release[1:]}.tar.gz doesn't exist. \t EXITING".expandtabs(150))
 
     def download_gitea_package(self):
-        if os.path.isfile(f"{self.latest_release}.tar.gz"):
-            print(f"DEBUG : File {self.latest_release}.tar.gz is already downloaded... \t PASS".expandtabs(150))
+        if os.path.isfile(f"gitea-{self.latest_release[1:]}.tar.gz"):
+            print(f"DEBUG : File gitea-{self.latest_release[1:]}.tar.gz is already downloaded... \t PASS".expandtabs(150))
             pass
         else:
             print(f"DEBUG : Downloading package... \t IN PROGRESS".expandtabs(150))
             try:
-                os.popen(f"wget https://github.com/go-gitea/gitea/archive/refs/tags/"
-                         f"{self.latest_release}.tar.gz").read()
+                package_url = f"https://github.com/go-gitea/gitea/archive/refs/tags/{self.latest_release}.tar.gz"
+                wget.download(package_url)
                 print("DEBUG : Downloading package... \t DONE".expandtabs(150))
             except Exception:
                 print("DEBUG : Something went wrong while downloading package. \t EXITING".expandtabs(150))
@@ -204,7 +205,7 @@ class PullRequest:
             self.discord_notify()
             # self.write_version(self.latest_release)
             self.git_pull_and_checkout()
-            # self.download_gitea_package()
+            self.download_gitea_package()
             # self.update_digests_file()
             # self.update_cross_makefile()
             # self.update_gitea_makefile()
