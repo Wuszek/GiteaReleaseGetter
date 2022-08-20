@@ -18,6 +18,7 @@ class PullRequest:
         self.webhook = None  # insert "webhook url address"
         self.repository = None
         self.username = config('username', default='')
+        self.email = config('email', default='')
         self.token = config('token', default='')
         self.remote = f"https://{self.username}:{self.token}@github.com/wkobiela/spksrc.git"
 
@@ -59,12 +60,11 @@ class PullRequest:
     def git_pull_and_checkout(self):
         if os.path.isdir("spksrc"):
             print("DEBUG : Repo already exists... \t PASS".expandtabs(150))
+            self.repository = Repo(f"{os.getcwd()}/spksrc")
             pass
         else:
 
             print("DEBUG : Repo does not exist. Setting up... \t IN PROGRESS".expandtabs(150))
-            # os.popen(f"git clone https://github.com/wkobiela/spksrc.git && cd spksrc && git remote add "
-            #          f"upstream https://github.com/SynoCommunity/spksrc.git").read()
             Repo.clone_from(self.remote, f"{os.getcwd()}/spksrc")
             self.repository = Repo(f"{os.getcwd()}/spksrc")
             cmd1 = f"cd spksrc && git remote add " \
@@ -75,11 +75,8 @@ class PullRequest:
 
         print("DEBUG : Updating repository... \t IN PROGRESS".expandtabs(150))
         try:
-            # INFO : Commented is for testing purposes
-            # os.popen(f"cd spksrc && git restore . && git pull upstream master && git rebase upstream/master").read()
-            # os.popen(f"cd spksrc && git checkout master && git pull upstream master && git rebase upstream/master "
-            #          f"&& git checkout -b {self.latest_release}").read()
             # TODO : Check, if branch already exists (now it stays on master if branch exists)
+            # TODO: Change cmd to use real branch name
             # cmd2 = f"cd spksrc && git checkout master && git pull upstream master && git rebase upstream/master " \
             #        f"&& git checkout -b {self.latest_release}"
 
@@ -90,7 +87,6 @@ class PullRequest:
             print("DEBUG : Repository updated successfully.  \t DONE".expandtabs(150))
         except Exception:
             print("ERROR : Something went wrong while updating repository. \t EXITING".expandtabs(150))
-
 
     def create_digests(self, hash_type):
         if os.path.isfile(f"{self.latest_release}.tar.gz"):
@@ -165,16 +161,19 @@ class PullRequest:
 
     def commit_changes(self):
         try:
+            self.repository.config_writer().set_value("user", "name", self.username).release()
+            self.repository.config_writer().set_value("user", "email", self.email).release()
             self.repository.git.add(update=True)
             self.repository.index.commit(f"Update Gitea to {self.latest_release}")
             print("DEBUG : Committing changes... \t DONE".expandtabs(150))
-        except Exception:
-            exit("DEBUG : Something went wrong while committing changes. \t EXITING".expandtabs(150))
+        except Exception as e:
+            exit(f"DEBUG : Something went wrong while committing changes. {e} \t EXITING".expandtabs(150))
 
     def push_changes(self):
         try:
             origin = self.repository.remote(name="origin")
             self.repository.head.reference.set_tracking_branch(origin.refs.master).checkout()
+            # TODO: change to real branch name
             #origin.push(self.latest_release)
             origin.push("test_branch")
             print("DEBUG : Pushing changes... \t DONE".expandtabs(150))
@@ -195,8 +194,6 @@ class PullRequest:
             print("DEBUG : There is nothing to delete and nothing happens. \t PASS".expandtabs(150))
             pass
 
-        # TODO: Uncomment git_pull_and_checkout operation 
-        # TODO: Function to push commit to repo after changes was made
         # TODO: Function to create PR from wkobiela/spksrc to synocommunity/spksrc with correct template
 
     def run(self):
