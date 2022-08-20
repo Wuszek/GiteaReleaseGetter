@@ -74,12 +74,9 @@ class PullRequest:
                 exit("ERROR : Something went wrong while updating repository. \t EXITING".expandtabs(150))
         print("DEBUG : Updating repository... \t IN PROGRESS".expandtabs(150))
         try:
-            # TODO: Change cmd to use real branch name
-            # cmd2 = f"cd spksrc && git checkout master && git pull upstream master && git rebase upstream/master " \
-            #        f"&& git checkout -b {self.latest_release}"
-
-
-            cmd2 = f"cd spksrc && git checkout master && git pull upstream master && git rebase upstream/master"
+            # TODO: Find a way to pull origin and rebase
+            self.repository.git.checkout("master")
+            cmd2 = f"cd spksrc && git pull upstream master && git rebase upstream/master"
             p2 = subprocess.Popen(cmd2, stdout=subprocess.PIPE, shell=True)
             p2.communicate()
 
