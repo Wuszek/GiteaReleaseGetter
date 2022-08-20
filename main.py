@@ -15,7 +15,7 @@ class PullRequest:
         self.sha1sum = None
         self.sha256sum = None
         self.md5sum = None
-        self.webhook = None  # insert "webhook url address"
+        self.webhook = config('webhook', default=None)
         self.repository = None
         self.username = config('username', default='')
         self.email = config('email', default='')
