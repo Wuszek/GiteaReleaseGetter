@@ -36,12 +36,12 @@ class PullRequest:
             with open(".version", "r+", encoding="utf-8") as f:
                 for line in f:
                     get_saved = line.split()
-            self.last_saved = get_saved[0][0]
-        else:
-            with open(".version", "w", encoding="utf-8") as file:
-                print(self.latest_release, file=file)
-            print("DEBUG : No .version file. Creating and filling one... \t DONE".expandtabs(150))
-            sys.exit("DEBUG : First run finished. \t EXITING".expandtabs(150))
+            self.last_saved = get_saved[0]
+            return self.last_saved
+        with open(".version", "w", encoding="utf-8") as file:
+            print(self.latest_release, file=file)
+        print("DEBUG : No .version file. Creating and filling one... \t DONE".expandtabs(150))
+        sys.exit("DEBUG : First run finished. \t EXITING".expandtabs(150))
 
     def discord_notify(self):
         content = f"**NEW GITEA UPDATE!** \nRelease: {self.latest_release}."
@@ -175,6 +175,7 @@ class PullRequest:
             sys.exit(f"DEBUG : Something went wrong while committing changes. {e} \t EXITING".expandtabs(150))
 
     def push_changes(self):
+        # TODO: Check if push did not throw any error
         try:
             origin = self.repository.remote(name="origin")
             self.repository.head.reference.set_tracking_branch(origin.refs.master).checkout()
