@@ -179,7 +179,7 @@ class PullRequest:
         try:
             origin = self.repository.remote(name="origin")
             self.repository.head.reference.set_tracking_branch(origin.refs.master).checkout()
-            origin.push(self.latest_release)
+            origin.push(self.latest_release).raise_if_error()
             print("DEBUG : Pushing changes... \t DONE".expandtabs(150))
         except Exception as e:
             print(f"EXCEPTION: {e}")
@@ -200,23 +200,26 @@ class PullRequest:
         # TODO: Function to create PR from wkobiela/spksrc to synocommunity/spksrc with correct template
 
     def run(self):
-        if self.get_latest() != self.read_version():
-            print(f"DEBUG : Newer version appeared: {self.latest_release}. Executing... \t IN PROGRESS".expandtabs(150))
-            self.discord_notify()
-            self.write_version(self.latest_release)
-            self.git_pull_and_checkout()
-            self.download_gitea_package()
-            self.update_digests_file()
-            self.update_cross_makefile()
-            self.update_gitea_makefile()
-            self.commit_changes()
-            self.push_changes()
+        try:
+            if self.get_latest() != self.read_version():
+                print(f"DEBUG : Newer version appeared: {self.latest_release}. Executing... \t IN PROGRESS".expandtabs(150))
+                self.discord_notify()
+                self.write_version(self.latest_release)
+                self.git_pull_and_checkout()
+                self.download_gitea_package()
+                self.update_digests_file()
+                self.update_cross_makefile()
+                self.update_gitea_makefile()
+                self.commit_changes()
+                self.push_changes()
+                self.cleanup()
+                print("DEBUG : All jobs finished. \t EXITING".expandtabs(150))
+                sys.exit(0)
+            else:
+                print(f"DEBUG : No update. {self.last_saved} is still latest release... \t EXITING".expandtabs(150))
+                sys.exit(0)
+        finally:
             self.cleanup()
-            print("DEBUG : All jobs finished. \t EXITING".expandtabs(150))
-            sys.exit(0)
-        else:
-            print(f"DEBUG : No update. {self.last_saved} is still latest release... \t EXITING".expandtabs(150))
-            sys.exit(0)
 
 
 gitea_update = PullRequest()
