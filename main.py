@@ -112,6 +112,7 @@ class PullRequest:
             try:
                 package_url = f"https://github.com/go-gitea/gitea/archive/refs/tags/{self.latest_release}.tar.gz"
                 wget.download(package_url)
+                print()
                 print("DEBUG : Downloading package... \t DONE".expandtabs(150))
             except Exception:
                 print("DEBUG : Something went wrong while downloading package. \t EXITING".expandtabs(150))
@@ -183,8 +184,8 @@ class PullRequest:
             print(f"EXCEPTION: {e}")
             sys.exit("DEBUG : Something went wrong while pushing changes. \t EXITING".expandtabs(150))
 
-    def cleanup(self, latest):
-        if os.path.isfile(f"{latest}.tar.gz"):
+    def cleanup(self):
+        if os.path.isfile(f"gitea-{self.latest_release[1:]}.tar.gz"):
             try:
                 check_output(["rm", f"gitea-{self.latest_release[1:]}.tar.gz"])
                 print(f"DEBUG : Removing gitea-{self.latest_release[1:]}.tar.gz from {os.getcwd()}... "
@@ -208,8 +209,8 @@ class PullRequest:
             self.update_cross_makefile()
             self.update_gitea_makefile()
             self.commit_changes()
-            # self.push_changes()
-            self.cleanup(self.latest_release)
+            self.push_changes()
+            self.cleanup()
             print("DEBUG : All jobs finished. \t EXITING".expandtabs(150))
             sys.exit(0)
         else:
